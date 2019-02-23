@@ -20,13 +20,14 @@
 function player(params) {
     this.values = [];
     this.name = params.name;
+    this.isAuto = params.isAuto;
 }
 player.prototype.isSameRow = function isSameRow() {
     const count = {0: 0, 1: 0, 2: 0};
     this.values.forEach(element => {
         count[element.y] +=1
     });
-    return count[0] === 3 || count[1] === 3 || count[2] === 3;
+    return count[0] === GRID_LENGTH || count[1] === GRID_LENGTH || count[2] === GRID_LENGTH;
 }
 player.prototype.isSameCol = function isSameCol() {
     const count = {0: 0, 1: 0, 2: 0};
@@ -39,11 +40,11 @@ player.prototype.isSameCol = function isSameCol() {
 player.prototype.isDiagonal = function isDiagonal() {
     let count = 0;
     this.values.forEach(element => {
-        if (element.x === element.y) {
+        if (element.x == element.y) {
             count ++;
         }
     });
-    return count === 3;
+    return count === GRID_LENGTH;
 }
 
 player.prototype.isWinner = function getValues() {
@@ -63,7 +64,7 @@ let turn = 'X';
 let currentPlayer = 0;
 function initializeGrid() {
     const player1 = new player({name: 'player1'});
-    const player2 = new player({name: 'player2'});
+    const player2 = new player({name: 'player2', isAuto: true});
     players = [player1, player2];
     for (let colIdx = 0;colIdx < GRID_LENGTH; colIdx++) {
         const tempArray = [];
@@ -127,29 +128,60 @@ function announceWinner (player) {
     remooveClickHandlers();
     location.reload();
 }
-function changePlayer(player) {
+function getCoords() {
+    let available = [];
+    for (let colIdx = 0;colIdx < GRID_LENGTH; colIdx++) {
+        for (let rowidx = 0; rowidx < GRID_LENGTH;rowidx++) {
+           if (grid[colIdx][rowidx] === 0) {
+               available.push({colIdx: colIdx, rowIdx: rowidx });
+           }
+        }
+    }
+    const index = Math.floor((Math.random() * available.length) + 1);
+    console.log("available co ords"+ JSON.stringify(available) );
+    return available[index];
+}
+function changePlayer() {
     currentPlayer = Number(!currentPlayer)
     const playerNode = document.getElementById('player');
+    const player = players[currentPlayer];
     const playerName = player.name;
     playerNode.innerHTML = '<span class="player">player '+ playerName + '</span>';
+    
+    if (player.isAuto) {
+        const coords = getCoords();
+        console.log("auto player coord"+ JSON.stringify(coords));
+        setValueInGrid(coords.rowIdx, coords.colIdx);
+    }
 }
 function onBoxClick() {
     var rowIdx = this.getAttribute("rowIdx");
     var colIdx = this.getAttribute("colIdx");
     console.log('current Player:'+grid);
-    const player = players[currentPlayer];
-    player.setValue({x: rowIdx, y: colIdx})
+    setValueInGrid(rowIdx, colIdx);
+}
+function setValueInGrid(rowIdx, colIdx) {
+    const playerObj = players[currentPlayer];
+    playerObj.setValue({x: rowIdx, y: colIdx})
     let newValue = currentPlayer + 1;
     grid[colIdx][rowIdx] = newValue;
-    if (!validateWinner(player)) {
+    if (!validateWinner(playerObj)) {
         renderMainGrid();
         addClickHandlers();
-        changePlayer(player);
+        changePlayer();
     } else {
-        console.log(player);
-        announceWinner(player);
+        console.log(playerObj);
+        announceWinner(playerObj);
     }
-    
+    isGameOver();
+}
+function isGameOver() {
+    const p1over = players[0].values.length === GRID_LENGTH;
+    const p2over = players[1].values.length === GRID_LENGTH;
+    if( p1over && p2over) {
+        alert("game Over");
+        location.reload();
+    }
 }
 
 function addClickHandlers() {
