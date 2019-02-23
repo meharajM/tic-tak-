@@ -115,6 +115,7 @@ function renderMainGrid() {
     grid.setAttribute('class', 'gridTop player'+ currentPlayer)
     const winner = (currentPlayer + 1);
     parent.innerHTML = '<div class="columnsStyle player'+winner+'">' + columnDivs + '</div>';
+    isGameOver() && announceGameOver();
 }
 function validateWinner(player) {
     console.log(player.isWinner());
@@ -137,7 +138,7 @@ function getCoords() {
            }
         }
     }
-    const index = Math.floor((Math.random() * available.length) + 1);
+    const index = Math.floor((Math.random() * available.length - 1) + 1);
     console.log("available co ords"+ JSON.stringify(available) );
     return available[index];
 }
@@ -160,28 +161,44 @@ function onBoxClick() {
     console.log('current Player:'+grid);
     setValueInGrid(rowIdx, colIdx);
 }
+function announceGameOver() {
+    console.log("game Over");
+    
+    setTimeout(function(){
+        const ans = confirm("game over. do u want to restart ?" );
+        if (ans) {
+            location.reload(); 
+        } 
+    }, 10);
+}
 function setValueInGrid(rowIdx, colIdx) {
-    const playerObj = players[currentPlayer];
-    playerObj.setValue({x: rowIdx, y: colIdx})
-    let newValue = currentPlayer + 1;
-    grid[colIdx][rowIdx] = newValue;
-    if (!validateWinner(playerObj)) {
+    if (!isGameOver()){
+        const playerObj = players[currentPlayer];
+        playerObj.setValue({x: rowIdx, y: colIdx})
+        let newValue = currentPlayer + 1;
+        grid[colIdx][rowIdx] = newValue;
         renderMainGrid();
         addClickHandlers();
-        changePlayer();
+    
+        if (!validateWinner(playerObj)) {
+            changePlayer();
+        } else {
+            console.log(playerObj);
+            announceWinner(playerObj);
+        }
     } else {
-        console.log(playerObj);
-        announceWinner(playerObj);
+       announceGameOver();
     }
-    isGameOver();
+
+   
 }
 function isGameOver() {
     const p1over = players[0].values.length === GRID_LENGTH;
     const p2over = players[1].values.length === GRID_LENGTH;
     if( p1over && p2over) {
-        alert("game Over");
-        location.reload();
+        return true;
     }
+    return false;
 }
 
 function addClickHandlers() {
